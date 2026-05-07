@@ -17,4 +17,5 @@ nav:
     - 实战项目: projects/
   - 参考:
     - C++ 特性参考卡: cpp-reference/
+  - 附录: appendix/
   - 标签: tags.md
