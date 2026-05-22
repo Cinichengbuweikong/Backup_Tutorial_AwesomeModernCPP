@@ -47,8 +47,66 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 DEFAULT_CACHE_DIR = SCRIPT_DIR / "cppref_cache"
 DEFAULT_MANIFEST = SCRIPT_DIR / "cppref_manifest.json"
-TEMPLATE_PATH = PROJECT_ROOT / ".templates" / "reference-card-template.md"
+TEMPLATE_PATH = None  # 模板已内联，见 REFERENCE_CARD_TEMPLATE
 WRITING_STYLE_PATH = PROJECT_ROOT / ".claude" / "writting_style.md"
+
+REFERENCE_CARD_TEMPLATE = """\
+---
+title: "特性名称"
+description: "一句话摘要"
+chapter: 99
+order: 0
+tags:
+  - host
+  - cpp-modern
+  - beginner
+difficulty: beginner
+cpp_standard: [11, 14, 17]
+---
+
+# 特性名称（C++XX）
+
+## 一句话
+
+用一句人话说清楚这是什么、解决什么问题。
+
+## 头文件
+
+`#include <...>`
+
+## 核心 API 速查
+
+| 操作 | 签名 | 说明 |
+|------|------|------|
+| ...  | `...` | ... |
+
+## 最小示例
+
+```cpp
+// 完整可编译的最小示例，不超过 20 行
+// Standard: C++XX
+```
+
+## 嵌入式适用性：高/中/低
+
+- 要点 1
+- 要点 2
+
+## 编译器支持
+
+| GCC | Clang | MSVC |
+|-----|-------|------|
+| X.Y | X.Y   | 19.X |
+
+## 另见
+
+- [教程：对应章节](相对路径)
+- [cppreference: 特性名](https://en.cppreference.com/w/cpp/...)
+
+---
+
+*部分内容参考自 [cppreference.com](https://en.cppreference.com/)，采用 [CC-BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) 许可*
+"""
 
 SYSTEM_PROMPT = """\
 你是一个 C++ 参考文档生成助手。你的任务是根据 cppreference 的原始内容，生成符合以下模板的中文参考卡。
@@ -237,10 +295,7 @@ def main():
     args = parser.parse_args()
 
     # 加载模板
-    if not TEMPLATE_PATH.exists():
-        print(f"错误: 模板文件不存在: {TEMPLATE_PATH}", file=sys.stderr)
-        sys.exit(1)
-    template = TEMPLATE_PATH.read_text(encoding="utf-8")
+    template = REFERENCE_CARD_TEMPLATE
 
     # 加载 manifest
     with open(args.manifest, "r", encoding="utf-8") as f:

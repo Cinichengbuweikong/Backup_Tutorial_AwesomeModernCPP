@@ -59,7 +59,7 @@ estimated_effort: small|medium|large|epic
 
 ## 模板
 
-新建 TODO 文件时，使用 `.templates/todo-template.md` 模板。
+新建 TODO 文件时，参照本目录已有文件的 frontmatter 格式。
 
 ## 归档
 
