@@ -6,15 +6,29 @@ type SidebarItem = DefaultTheme.SidebarItem
 
 const DOCS_ROOT = join(import.meta.dirname, '../../../documents')
 
+// 侧边栏标题经 v-html 渲染（见 VPSidebarItem.vue），裸的 < > 会被浏览器当成 HTML
+// 标签吃掉（例如标题 `<numeric>：...` 的左侧会凭空消失）。先转义，v-html 再还原成字面量。
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
 function extractTitle(filePath: string): string | null {
   try {
     const content = readFileSync(filePath, 'utf-8')
     const fmMatch = content.match(/^---[\s\S]*?^title:\s*['"]?(.+?)['"]?\s*$/m)
-    if (fmMatch) return fmMatch[1]
+    if (fmMatch) return escapeHtml(fmMatch[1])
     const h1 = content.match(/^#\s+(.+)$/m)
-    if (h1) return h1[1].replace(/\{.*?\}/g, '').trim()
+    if (h1) return escapeHtml(h1[1].replace(/\{.*?\}/g, '').trim())
   } catch { /* ignore */ }
   return null
+}
+
+function extractSidebarOrder(indexPath: string): number | undefined {
+  try {
+    const content = readFileSync(indexPath, 'utf-8')
+    const m = content.match(/^sidebar_order:\s*(\d+)/m)
+    return m ? parseInt(m[1], 10) : undefined
+  } catch { /* ignore */ }
 }
 
 function humanize(name: string): string {
@@ -47,7 +61,26 @@ function scanDir(dir: string, urlPrefix: string, depth = 0): SidebarItem[] {
     )
   } catch { return [] }
 
-  entries.sort(sortEntries)
+  // 子目录优先按其 index.md 的 sidebar_order 排序;文件按文件名开头数字;否则字母序
+  const ordered = entries.map(name => {
+    const full = join(dir, name)
+    let order: number | undefined
+    try {
+      if (statSync(full).isDirectory()) {
+        order = extractSidebarOrder(join(full, 'index.md'))
+      } else if (/^\d+/.test(name)) {
+        order = parseInt(name.match(/^(\d+)/)![1], 10)
+      }
+    } catch { /* ignore */ }
+    return { name, order }
+  })
+  ordered.sort((a, b) => {
+    if (a.order !== undefined && b.order !== undefined) return a.order - b.order
+    if (a.order !== undefined) return -1
+    if (b.order !== undefined) return 1
+    return a.name.localeCompare(b.name, 'zh-CN')
+  })
+  entries = ordered.map(e => e.name)
   const items: SidebarItem[] = []
 
   for (const name of entries) {
